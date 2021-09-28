@@ -117,7 +117,9 @@ export default class EmulatorClient {
   ): Promise<string> {
     return this.connection()
       .then((conn) => {
-        return new EmulatorCommand(conn, this.parser).execute(cmd);
+        return new EmulatorCommand(conn, this.parser)
+          .setTimeout(100)
+          .execute(cmd);
       })
       .nodeify(cb);
   }
