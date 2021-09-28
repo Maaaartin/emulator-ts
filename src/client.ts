@@ -1,8 +1,8 @@
-import Promise from 'bluebird';
-import fs from 'fs';
-import { Socket, SocketConnectOpts } from 'net';
-import Path from 'path';
-import userHome from 'user-home';
+import Promise from "bluebird";
+import fs from "fs";
+import { Socket, SocketConnectOpts } from "net";
+import Path from "path";
+import userHome from "user-home";
 import {
   EmulatorPorts,
   EventType,
@@ -11,27 +11,27 @@ import {
   PowerDisplay,
   PowerStatus,
   ScreenRecordOptions,
-} from '.';
-import EmulatorCommand from './command';
-import AvdHearbeatCommand from './commands/avdheartbeat';
-import AvdNameCommand from './commands/avdname';
-import AvdSnapshotListCommand from './commands/avdsnapshotlist';
-import AvdStatusCommand from './commands/avdstatus';
-import EventCodesCommand from './commands/eventcodes';
-import GsmListCommand from './commands/gsmlist';
-import GsmStatusCommand from './commands/gsmstatus';
-import NetworkStatusCommand from './commands/networkstatus';
-import PingCommand from './commands/pingcommand';
-import PowerDisplayCommand from './commands/powedisplay';
-import RedirListCommand from './commands/redirlist';
-import ScreenrecordWebrtcStartCommand from './commands/screenrecordwebrtc';
-import SensorGetCommand from './commands/sensorget';
-import SensorStatusCommand from './commands/sensorstatus';
-import Connection from './connection';
-import { Ev_AbsCode, Ev_KeyCode, Ev_RelCode, Ev_SwCode } from './emulatorcode';
-import Parser from './parser';
-import VoidCommand from './voidcommand';
-import VoidQueueCommand from './voidiqueuecommand';
+} from ".";
+import EmulatorCommand from "./command";
+import AvdHearbeatCommand from "./commands/avdheartbeat";
+import AvdNameCommand from "./commands/avdname";
+import AvdSnapshotListCommand from "./commands/avdsnapshotlist";
+import AvdStatusCommand from "./commands/avdstatus";
+import EventCodesCommand from "./commands/eventcodes";
+import GsmListCommand from "./commands/gsmlist";
+import GsmStatusCommand from "./commands/gsmstatus";
+import NetworkStatusCommand from "./commands/networkstatus";
+import PingCommand from "./commands/pingcommand";
+import PowerDisplayCommand from "./commands/powedisplay";
+import RedirListCommand from "./commands/redirlist";
+import ScreenrecordWebrtcStartCommand from "./commands/screenrecordwebrtc";
+import SensorGetCommand from "./commands/sensorget";
+import SensorStatusCommand from "./commands/sensorstatus";
+import Connection from "./connection";
+import { Ev_AbsCode, Ev_KeyCode, Ev_RelCode, Ev_SwCode } from "./emulatorcode";
+import Parser from "./parser";
+import VoidCommand from "./voidcommand";
+import VoidQueueCommand from "./voidiqueuecommand";
 
 export default class EmulatorClient {
   private connectOpt: SocketConnectOpts;
@@ -45,14 +45,14 @@ export default class EmulatorClient {
 
   static readTokenSync() {
     return fs
-      .readFileSync(Path.join(userHome, '.emulator_console_auth_token'))
+      .readFileSync(Path.join(userHome, ".emulator_console_auth_token"))
       .toString();
   }
 
   static readToken(cb?: (err: Error, value: string) => void) {
     return new Promise<string>((resolve, reject) => {
       fs.readFile(
-        Path.join(userHome, '.emulator_console_auth_token'),
+        Path.join(userHome, ".emulator_console_auth_token"),
         (err, data) => {
           if (err) return reject(err);
           else return resolve(data.toString());
@@ -69,7 +69,7 @@ export default class EmulatorClient {
           resolve();
           socket.end();
         });
-        socket.once('data', (data) => {
+        socket.once("data", (data) => {
           const dataStr = data.toString();
           if (
             /OK/.test(dataStr.slice(dataStr.length - 4, dataStr.length - 2))
@@ -80,7 +80,7 @@ export default class EmulatorClient {
           }
           socket.end();
         });
-        socket.once('error', (err) => {
+        socket.once("error", (err) => {
           resolve();
           socket.end();
         });
@@ -104,10 +104,10 @@ export default class EmulatorClient {
   private connection() {
     return new Promise<Connection>((resolve, reject) => {
       const stream = new Connection(this.token, this.parser, this.connectOpt);
-      stream.on('auth', () => {
+      stream.on("auth", () => {
         resolve(stream);
       });
-      stream.on('error', reject);
+      stream.on("error", reject);
     });
   }
 
@@ -164,7 +164,7 @@ export default class EmulatorClient {
     });
   }
 
-  powerAc(status: 'on' | 'off') {
+  powerAc(status: "on" | "off") {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`power ac ${status}`);
     });
@@ -187,7 +187,7 @@ export default class EmulatorClient {
   }
 
   powerHealth(
-    state: 'unknown' | 'good' | 'overheat' | 'dead' | 'overvoltage' | 'failure'
+    state: "unknown" | "good" | "overheat" | "dead" | "overvoltage" | "failure"
   ) {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
@@ -241,22 +241,22 @@ export default class EmulatorClient {
   }
 
   eventSend(
-    type: 'EV_KEY',
+    type: "EV_KEY",
     code: Ev_KeyCode,
     value: 0 | 1 | string
   ): Promise<void>;
   eventSend(
-    type: 'EV_REL',
+    type: "EV_REL",
     code: Ev_RelCode,
     value: 0 | 1 | string
   ): Promise<void>;
   eventSend(
-    type: 'EV_ABS',
+    type: "EV_ABS",
     code: Ev_AbsCode,
     value: 0 | 1 | string
   ): Promise<void>;
   eventSend(
-    type: 'EV_SW',
+    type: "EV_SW",
     code: Ev_SwCode,
     value: 0 | 1 | string
   ): Promise<void>;
@@ -301,8 +301,8 @@ export default class EmulatorClient {
   sensorSet(name: string, valueA: number, valueB?: number, valueC?: number) {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
-        .addArg(valueB, ':')
-        .addArg(valueC, ':')
+        .addArg(valueB, ":")
+        .addArg(valueC, ":")
         .execute(`sensor set ${name} ${valueA}`);
     });
   }
@@ -324,7 +324,7 @@ export default class EmulatorClient {
   geoNmea(sentence: string, ...params: string[]) {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
-        `geo nmea ${sentence}, ${params.join(',')}`
+        `geo nmea ${sentence}, ${params.join(",")}`
       );
     });
   }
@@ -338,9 +338,9 @@ export default class EmulatorClient {
   ) {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
-        .addArg(altitude, ' ')
-        .addArg(satelites, ' ')
-        .addArg(velocity, ' ')
+        .addArg(altitude, " ")
+        .addArg(satelites, " ")
+        .addArg(velocity, " ")
         .execute(`geo fix ${longitude} ${latitude}`);
     });
   }
@@ -348,7 +348,7 @@ export default class EmulatorClient {
   geoGnss(...values: string[]) {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
-        `geo gnss ${values.join(',')}`
+        `geo gnss ${values.join(",")}`
       );
     });
   }
@@ -399,7 +399,7 @@ export default class EmulatorClient {
     });
   }
 
-  gsmMeter(state: 'on' | 'off') {
+  gsmMeter(state: "on" | "off") {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`gsm meter ${state}`);
     });
@@ -420,7 +420,7 @@ export default class EmulatorClient {
   gsmSignal(rssi: number, ber?: number) {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
-        .addArg(ber, ' ')
+        .addArg(ber, " ")
         .execute(`gsm signal ${rssi}`);
     });
   }
@@ -433,7 +433,7 @@ export default class EmulatorClient {
     });
   }
 
-  cdmaSsource(source: 'nv' | 'ruim') {
+  cdmaSsource(source: "nv" | "ruim") {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `cdma ssource ${source}`
@@ -482,32 +482,32 @@ export default class EmulatorClient {
   networkSpeed(up: number, down: number): Promise<void>;
   networkSpeed(
     speed:
-      | 'gsm'
-      | 'hscsd'
-      | 'gprs'
-      | 'edge'
-      | 'umts'
-      | 'hsdpa'
-      | 'lte'
-      | 'evdo'
-      | 'full'
+      | "gsm"
+      | "hscsd"
+      | "gprs"
+      | "edge"
+      | "umts"
+      | "hsdpa"
+      | "lte"
+      | "evdo"
+      | "full"
   ): Promise<void>;
   networkSpeed(speed: number): Promise<void>;
   networkSpeed(speed: any, param?: any) {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
-        .addArg(param, ':')
+        .addArg(param, ":")
         .execute(`network speed ${speed}`);
     });
   }
 
   networkDelay(min: number, max: number): Promise<void>;
-  networkDelay(delay: 'gprs' | 'edge' | 'umts' | 'none'): Promise<void>;
+  networkDelay(delay: "gprs" | "edge" | "umts" | "none"): Promise<void>;
   networkDelay(delay: number): Promise<void>;
   networkDelay(delay: any, param?: any) {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
-        .addArg(param, ':')
+        .addArg(param, ":")
         .execute(`network delay ${delay}`);
     });
   }
@@ -615,7 +615,7 @@ export default class EmulatorClient {
   debug(...tags: string[]) {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
-        `debug ${tags.join(',')}`
+        `debug ${tags.join(",")}`
       );
     });
   }
@@ -639,18 +639,18 @@ export default class EmulatorClient {
           height !== undefined && width !== undefined
             ? `--size ${width}x${height}`
             : undefined,
-          ' '
+          " "
         )
         .addArg(
           bitRate !== undefined ? `--bit-rate ${bitRate}` : undefined,
-          ' '
+          " "
         )
         .addArg(
           timeLimit !== undefined ? `--time-limit ${timeLimit}` : undefined,
-          ' '
+          " "
         )
-        .addArg(fsp !== undefined ? `--fps ${fsp}` : undefined, ' ')
-        .addArg(`${cwd ? Path.join(cwd, name) : name}.webm`, ' ')
+        .addArg(fsp !== undefined ? `--fps ${fsp}` : undefined, " ")
+        .addArg(`${cwd ? Path.join(cwd, name) : name}.webm`, " ")
         .execute(`screenrecord start`);
     });
   }
@@ -685,13 +685,15 @@ export default class EmulatorClient {
 
   fold() {
     return this.connection().then((conn) => {
-      return new VoidCommand(conn, this.parser).execute(`screenrecord fold`);
+      return new VoidCommand(conn, this.parser).setTimeout(100).execute(`fold`);
     });
   }
 
   unfold() {
     return this.connection().then((conn) => {
-      return new VoidCommand(conn, this.parser).execute(`screenrecord unfold`);
+      return new VoidCommand(conn, this.parser)
+        .setTimeout(100)
+        .execute(`unfold`);
     });
   }
 
@@ -735,7 +737,7 @@ export default class EmulatorClient {
     });
   }
 
-  setUiTheme(theme: 'light' | 'dark') {
+  setUiTheme(theme: "light" | "dark") {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`setUiTheme ${theme}`);
     });
@@ -744,7 +746,7 @@ export default class EmulatorClient {
   iceboxTrack(pid: number, maxSnapshots?: number) {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
-        .addArg(maxSnapshots, ' ')
+        .addArg(maxSnapshots, " ")
         .execute(`icebox track ${pid}`);
     });
   }
