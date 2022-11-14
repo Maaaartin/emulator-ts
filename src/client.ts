@@ -335,13 +335,13 @@ export default class EmulatorClient {
     longitude: number,
     latitude: number,
     altitude?: number,
-    satelites?: number,
+    satellites?: number,
     velocity?: number
   ) {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
         .addArg(altitude, " ")
-        .addArg(satelites, " ")
+        .addArg(satellites, " ")
         .addArg(velocity, " ")
         .execute(`geo fix ${longitude} ${latitude}`);
     });
@@ -570,7 +570,7 @@ export default class EmulatorClient {
     });
   }
 
-  avdSnaphotSave(name: string) {
+  avdSnapshotSave(name: string) {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `avd snapshot save ${name}`

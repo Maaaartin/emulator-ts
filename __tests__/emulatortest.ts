@@ -1,7 +1,7 @@
-const EmulatorClient = require('../lib/client').default;
+const EmulatorClient = require("../lib/client").default;
 
-jest.setTimeout(10000)
-const client = new EmulatorClient('L3Dg6JJ6qS8Ftnn4', { port: 5554 });
+jest.setTimeout(10000);
+const client = new EmulatorClient("L3Dg6JJ6qS8Ftnn4", { port: 5554 });
 
 // test('ping', async () => {
 //     const res = await new Promise((resolve, reject) => {
@@ -98,7 +98,6 @@ const client = new EmulatorClient('L3Dg6JJ6qS8Ftnn4', { port: 5554 });
 //     });
 //     expect(res).toBe('Pixel_2_API_27')
 // })
-
 
 // test('power', async () => {
 //     const socket = new EmulatorConnection('L3Dg6JJ6qS8Ftnn4');
