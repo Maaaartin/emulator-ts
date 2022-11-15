@@ -24,20 +24,22 @@ export default class EmulatorCommand {
           reject(new Error("Command timeout"));
         });
       }
+      let response = "";
       this.connection.on(
         "data",
         (handler = (data) => {
           const dataStr = data.toString();
-          let response = "",
-            err;
+          let err;
           if (
             /OK/.test(dataStr.slice(dataStr.length - 4, dataStr.length - 2))
           ) {
             response = response.concat(dataStr);
             return resolve(response);
-          } else if ((err = this.parser.checkError(dataStr))) {
+          }
+          if ((err = this.parser.checkError(dataStr))) {
             return reject(err);
-          } else {
+          }
+          {
             return (response = response.concat(dataStr));
           }
         })

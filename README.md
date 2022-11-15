@@ -2,13 +2,13 @@
 
 Node.js implementation of Emulator console: https://developer.android.com/studio/run/emulator-console.
 
-##Installation
+## Installation
 
 ```bash
 yarn add emulator-ts
 ```
 
-##API
+## API
 
 #### emulator static methods
 
@@ -97,7 +97,7 @@ emulator.ping()
 
 Pings the emulator port. If resolves, emulator is alive. Analogous to `ping`.
 
-- Returns: `Promise<void>`
+- Returns: `Promise<boolean>`
 
 ##### emulator.automationRecord(name: string, cwd?: string)
 
@@ -240,7 +240,7 @@ emulator.redirList()
 
 Lists current port redirections. `RedirObject` is a type with properties `protocol`, `hostPort` and `guestPort`. Analogous to `redir del <protocol>:<hostport>`.
 
-- Returns: `Promise<void>`
+- Returns: `Promise<RedirObject[]>`
 
 ##### emulator.sms(phoneNr: number | string, message: string)
 
@@ -283,7 +283,7 @@ emulator.eventMouse(100, 0)
     .then(() => null));
 ```
 
-Allows to genenarate a mouse event
+Allows to generate a mouse event
 at x, y with the given buttonstate using the given device.
 Where device:
 0 = touch screen
@@ -650,6 +650,23 @@ Analogous to `network delay <latency>`.
 
 - Returns: `Promise<void>`
 
+##### emulator.networkSpeed(up: number, down: number)
+
+##### emulator.networkSpeed( speed:| 'gsm' | 'hscsd' |'gprs' | 'edge' |'umts' | 'hsdpa' | 'lte' | 'evdo' | 'full'
+
+)
+
+```ts
+emulator.networkSpeed(100 , 200)
+    .then(() => null));
+```
+
+Allows you to dynamically change the speed of the emulated
+network on the device.
+Analogous to `network speed <speed>`.
+
+- Returns: `Promise<void>`
+
 ##### emulator.networkCaptureStart(name: string, cwd?: string)
 
 ```ts
@@ -774,10 +791,10 @@ Analogous to `avd snapshot save <name>`.
 
 - Returns: `Promise<void>`
 
-##### emulator.avdSnaphotLoad(name: string)
+##### emulator.avdSnapshotLoad(name: string)
 
 ```ts
-emulator.avdSnaphotLoad('some-name')
+emulator.avdSnapshotLoad('some-name')
     .then(() => null));
 ```
 
@@ -786,10 +803,10 @@ Analogous to `avd snapshot load <name>`.
 
 - Returns: `Promise<void>`
 
-##### emulator.avdSnaphotDelete(name: string)
+##### emulator.avdSnapshotDelete(name: string)
 
 ```ts
-emulator.avdSnaphotDelete('some-name')
+emulator.avdSnapshotDelete('some-name')
     .then(() => null));
 ```
 
@@ -798,10 +815,10 @@ Analogous to `avd snapshot delete <name>`.
 
 - Returns: `Promise<void>`
 
-##### emulator.avdSnaphotRemap(autoSave: 0 | 1)
+##### emulator.avdSnapshotRemap(autoSave: 0 | 1)
 
 ```ts
-emulator.avdSnaphotRemap(1)
+emulator.avdSnapshotRemap(1)
     .then(() => null));
 ```
 
@@ -928,7 +945,7 @@ Sharing will happen on only one handle and will be returned on start.
 An option framerate can be provided, the default is fps=60.
 Analogous to `screenrecord webrtc start <fps>`.
 
-- Returns: `Promise<void>`
+- Returns: `Promise<string>`
 
 ##### emulator.screenrecordWebrtcStop()
 

@@ -6,14 +6,17 @@ import userHome from "user-home";
 import {
   EmulatorPorts,
   EventType,
+  GsmListObject,
   GsmState,
   NetProtocol,
   PowerDisplay,
   PowerStatus,
+  RedirObject,
   ScreenRecordOptions,
+  SnapshotObject,
 } from ".";
 import EmulatorCommand from "./command";
-import AvdHearbeatCommand from "./commands/avdheartbeat";
+import AvdHeartbeatCommand from "./commands/avdheartbeat";
 import AvdNameCommand from "./commands/avdname";
 import AvdSnapshotListCommand from "./commands/avdsnapshotlist";
 import AvdStatusCommand from "./commands/avdstatus";
@@ -43,7 +46,7 @@ export default class EmulatorClient {
     this.parser = new Parser();
   }
 
-  static readTokenSync() {
+  static readTokenSync(): string {
     return fs
       .readFileSync(Path.join(userHome, ".emulator_console_auth_token"))
       .toString();
@@ -80,7 +83,7 @@ export default class EmulatorClient {
           }
           socket.end();
         });
-        socket.once("error", (err) => {
+        socket.once("error", () => {
           resolve();
           socket.end();
         });
@@ -124,13 +127,13 @@ export default class EmulatorClient {
       .nodeify(cb);
   }
 
-  ping() {
+  ping(): Promise<boolean> {
     return this.connection().then((conn) => {
       return new PingCommand(conn, this.parser).execute();
     });
   }
 
-  automationRecord(name: string, cwd?: string) {
+  automationRecord(name: string, cwd?: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `automation record ${cwd ? Path.join(cwd, name) : name}`
@@ -138,7 +141,7 @@ export default class EmulatorClient {
     });
   }
 
-  automationStopRecord() {
+  automationStopRecord(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `automation stop-record`
@@ -146,7 +149,7 @@ export default class EmulatorClient {
     });
   }
 
-  automationPlay(name: string, cwd?: string) {
+  automationPlay(name: string, cwd?: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `automation play ${cwd ? Path.join(cwd, name) : name}`
@@ -154,7 +157,7 @@ export default class EmulatorClient {
     });
   }
 
-  automationStopPlay() {
+  automationStopPlay(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`automation stop-play`);
     });
@@ -172,7 +175,7 @@ export default class EmulatorClient {
     });
   }
 
-  powerStatus(status: PowerStatus) {
+  powerStatus(status: PowerStatus): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `power status ${status}`
@@ -180,7 +183,7 @@ export default class EmulatorClient {
     });
   }
 
-  powerPresent(state: boolean) {
+  powerPresent(state: boolean): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `power present ${state}`
@@ -190,7 +193,7 @@ export default class EmulatorClient {
 
   powerHealth(
     state: "unknown" | "good" | "overheat" | "dead" | "overvoltage" | "failure"
-  ) {
+  ): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `power health ${state}`
@@ -198,7 +201,7 @@ export default class EmulatorClient {
     });
   }
 
-  powerCapacity(capacity: number) {
+  powerCapacity(capacity: number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `power capacity ${capacity}`
@@ -206,7 +209,11 @@ export default class EmulatorClient {
     });
   }
 
-  redirAdd(protocol: NetProtocol, hostPort: number, guestPort: number) {
+  redirAdd(
+    protocol: NetProtocol,
+    hostPort: number,
+    guestPort: number
+  ): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `redir add ${protocol}:${hostPort}:${guestPort}`
@@ -214,7 +221,7 @@ export default class EmulatorClient {
     });
   }
 
-  redirDel(protocol: NetProtocol, hostPort: number) {
+  redirDel(protocol: NetProtocol, hostPort: number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `redir del ${protocol}:${hostPort}`
@@ -222,13 +229,13 @@ export default class EmulatorClient {
     });
   }
 
-  redirList() {
+  redirList(): Promise<RedirObject[]> {
     return this.connection().then((conn) => {
       return new RedirListCommand(conn, this.parser).execute();
     });
   }
 
-  sms(phoneNr: number | string, message: string) {
+  sms(phoneNr: number | string, message: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `sms send ${phoneNr} ${message}`
@@ -236,7 +243,7 @@ export default class EmulatorClient {
     });
   }
 
-  eventCodes(type: EventType) {
+  eventCodes(type: EventType): Promise<string[]> {
     return this.connection().then((conn) => {
       return new EventCodesCommand(conn, this.parser).execute(type);
     });
@@ -272,7 +279,11 @@ export default class EmulatorClient {
     code: string | number,
     value: 0 | 1 | string
   ): Promise<void>;
-  eventSend(type: string | number, code: string, value: 0 | 1 | string) {
+  eventSend(
+    type: string | number,
+    code: string,
+    value: 0 | 1 | string
+  ): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `event send ${type}:${code}:${value}`
@@ -280,7 +291,7 @@ export default class EmulatorClient {
     });
   }
 
-  eventMouse(x: number, y: number, device = 0, bntState = 1) {
+  eventMouse(x: number, y: number, device = 0, bntState = 1): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `event mouse ${x} ${y} ${device} ${bntState}`
@@ -288,19 +299,24 @@ export default class EmulatorClient {
     });
   }
 
-  sensorStatus() {
+  sensorStatus(): Promise<Record<string, "enabled" | "disabled">> {
     return this.connection().then((conn) => {
       return new SensorStatusCommand(conn, this.parser).execute();
     });
   }
 
-  sensorGet(name: string) {
+  sensorGet(name: string): Promise<number[]> {
     return this.connection().then((conn) => {
       return new SensorGetCommand(conn, this.parser).execute(name);
     });
   }
 
-  sensorSet(name: string, valueA: number, valueB?: number, valueC?: number) {
+  sensorSet(
+    name: string,
+    valueA: number,
+    valueB?: number,
+    valueC?: number
+  ): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
         .addArg(valueB, ":")
@@ -309,7 +325,7 @@ export default class EmulatorClient {
     });
   }
 
-  physicsRecordGt(name: string, cwd?: string) {
+  physicsRecordGt(name: string, cwd?: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `physics record-gt ${cwd ? Path.join(cwd, name) : name}`
@@ -317,13 +333,13 @@ export default class EmulatorClient {
     });
   }
 
-  physicsStop() {
+  physicsStop(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`physics stop`);
     });
   }
 
-  geoNmea(sentence: string, ...params: string[]) {
+  geoNmea(sentence: string, ...params: string[]): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `geo nmea ${sentence}, ${params.join(",")}`
@@ -337,7 +353,7 @@ export default class EmulatorClient {
     altitude?: number,
     satellites?: number,
     velocity?: number
-  ) {
+  ): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
         .addArg(altitude, " ")
@@ -347,7 +363,7 @@ export default class EmulatorClient {
     });
   }
 
-  geoGnss(...values: string[]) {
+  geoGnss(...values: string[]): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `geo gnss ${values.join(",")}`
@@ -355,31 +371,31 @@ export default class EmulatorClient {
     });
   }
 
-  gsmList() {
+  gsmList(): Promise<GsmListObject[]> {
     return this.connection().then((conn) => {
       return new GsmListCommand(conn, this.parser).execute();
     });
   }
 
-  gsmCall(phoneNr: string | number) {
+  gsmCall(phoneNr: string | number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`gsm call ${phoneNr}`);
     });
   }
 
-  gsmBusy(phoneNr: string | number) {
+  gsmBusy(phoneNr: string | number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`gsm busy ${phoneNr}`);
     });
   }
 
-  gsmHold(phoneNr: string | number) {
+  gsmHold(phoneNr: string | number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`gsm hold ${phoneNr}`);
     });
   }
 
-  gsmAccept(phoneNr: string | number) {
+  gsmAccept(phoneNr: string | number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `gsm accept ${phoneNr}`
@@ -387,7 +403,7 @@ export default class EmulatorClient {
     });
   }
 
-  gsmCancel(phoneNr: string | number) {
+  gsmCancel(phoneNr: string | number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `gsm cancel ${phoneNr}`
@@ -395,31 +411,31 @@ export default class EmulatorClient {
     });
   }
 
-  gsmData(state: GsmState) {
+  gsmData(state: GsmState): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`gsm data ${state}`);
     });
   }
 
-  gsmMeter(state: "on" | "off") {
+  gsmMeter(state: "on" | "off"): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`gsm meter ${state}`);
     });
   }
 
-  gsmVoice(state: GsmState) {
+  gsmVoice(state: GsmState): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`gsm voice ${state}`);
     });
   }
 
-  gsmStatus() {
+  gsmStatus(): Promise<Record<string, GsmState>> {
     return this.connection().then((conn) => {
       return new GsmStatusCommand(conn, this.parser).execute();
     });
   }
 
-  gsmSignal(rssi: number, ber?: number) {
+  gsmSignal(rssi: number, ber?: number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
         .addArg(ber, " ")
@@ -427,7 +443,7 @@ export default class EmulatorClient {
     });
   }
 
-  gsmSignalProfile(strength: 0 | 1 | 2 | 3 | 4) {
+  gsmSignalProfile(strength: 0 | 1 | 2 | 3 | 4): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `gsm signal-profile ${strength}`
@@ -435,7 +451,7 @@ export default class EmulatorClient {
     });
   }
 
-  cdmaSsource(source: "nv" | "ruim") {
+  cdmaSsource(source: "nv" | "ruim"): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `cdma ssource ${source}`
@@ -443,7 +459,7 @@ export default class EmulatorClient {
     });
   }
 
-  cdmaPrlVersion(version: string | number) {
+  cdmaPrlVersion(version: string | number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `cdma prl_version ${version}`
@@ -451,31 +467,31 @@ export default class EmulatorClient {
     });
   }
 
-  crash() {
+  crash(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`crash`);
     });
   }
 
-  crashOnExit() {
+  crashOnExit(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`crash-on-exit`);
     });
   }
 
-  kill() {
+  kill(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`kill`);
     });
   }
 
-  restart() {
+  restart(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`restart`);
     });
   }
 
-  networkStatus() {
+  networkStatus(): Promise<Record<string, string>> {
     return this.connection().then((conn) => {
       return new NetworkStatusCommand(conn, this.parser).execute();
     });
@@ -495,7 +511,7 @@ export default class EmulatorClient {
       | "full"
   ): Promise<void>;
   networkSpeed(speed: number): Promise<void>;
-  networkSpeed(speed: any, param?: any) {
+  networkSpeed(speed: any, param?: any): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
         .addArg(param, ":")
@@ -506,7 +522,7 @@ export default class EmulatorClient {
   networkDelay(min: number, max: number): Promise<void>;
   networkDelay(delay: "gprs" | "edge" | "umts" | "none"): Promise<void>;
   networkDelay(delay: number): Promise<void>;
-  networkDelay(delay: any, param?: any) {
+  networkDelay(delay: any, param?: any): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
         .addArg(param, ":")
@@ -514,7 +530,7 @@ export default class EmulatorClient {
     });
   }
 
-  networkCaptureStart(name: string, cwd?: string) {
+  networkCaptureStart(name: string, cwd?: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `network capture start ${cwd ? Path.join(cwd, name) : name}`
@@ -522,55 +538,55 @@ export default class EmulatorClient {
     });
   }
 
-  networkCaptureStop() {
+  networkCaptureStop(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`network capture stop`);
     });
   }
 
-  avdStop() {
+  avdStop(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`avd stop`);
     });
   }
 
-  avdStart() {
+  avdStart(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`avd start`);
     });
   }
 
-  avdStatus() {
+  avdStatus(): Promise<"running" | "stopped"> {
     return this.connection().then((conn) => {
       return new AvdStatusCommand(conn, this.parser).execute();
     });
   }
 
-  avdHeartbeat() {
+  avdHeartbeat(): Promise<number> {
     return this.connection().then((conn) => {
-      return new AvdHearbeatCommand(conn, this.parser).execute();
+      return new AvdHeartbeatCommand(conn, this.parser).execute();
     });
   }
 
-  avdRewindaudio() {
+  avdRewindaudio(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`avd rewindaudio`);
     });
   }
 
-  avdName() {
+  avdName(): Promise<string> {
     return this.connection().then((conn) => {
       return new AvdNameCommand(conn, this.parser).execute();
     });
   }
 
-  avdSnapshotList() {
+  avdSnapshotList(): Promise<SnapshotObject[]> {
     return this.connection().then((conn) => {
       return new AvdSnapshotListCommand(conn, this.parser).execute();
     });
   }
 
-  avdSnapshotSave(name: string) {
+  avdSnapshotSave(name: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `avd snapshot save ${name}`
@@ -578,7 +594,7 @@ export default class EmulatorClient {
     });
   }
 
-  avdSnaphotLoad(name: string) {
+  avdSnapshotLoad(name: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `avd snapshot load ${name}`
@@ -586,7 +602,7 @@ export default class EmulatorClient {
     });
   }
 
-  avdSnaphotDelete(name: string) {
+  avdSnapshotDelete(name: string): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `avd snapshot delete ${name}`
@@ -594,7 +610,7 @@ export default class EmulatorClient {
     });
   }
 
-  avdSnaphotRemap(autoSave: 0 | 1) {
+  avdSnapshotRemap(autoSave: 0 | 1): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `avd snapshot remap ${autoSave}`
@@ -602,19 +618,19 @@ export default class EmulatorClient {
     });
   }
 
-  fingerTouch(id: number) {
+  fingerTouch(id: number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`finger touch ${id}`);
     });
   }
 
-  fingerRemove() {
+  fingerRemove(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`finger remove`);
     });
   }
 
-  debug(...tags: string[]) {
+  debug(...tags: string[]): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `debug ${tags.join(",")}`
@@ -622,7 +638,7 @@ export default class EmulatorClient {
     });
   }
 
-  rotate() {
+  rotate(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`rotate`);
     });
@@ -631,7 +647,7 @@ export default class EmulatorClient {
   screenrecordStart(
     name: string,
     options?: ScreenRecordOptions & { cwd?: string }
-  ) {
+  ): Promise<void> {
     options = options || {};
     const { cwd, height, width, bitRate, timeLimit, fsp } = options;
     return this.connection().then((conn) => {
@@ -657,13 +673,13 @@ export default class EmulatorClient {
     });
   }
 
-  screenrecordStop() {
+  screenrecordStop(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`screenrecord stop`);
     });
   }
 
-  screenrecordScreenshot(dirName: string, displayId = 0) {
+  screenrecordScreenshot(dirName: string, displayId = 0): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `screenrecord screenshot --display ${displayId} ${dirName}`
@@ -671,13 +687,13 @@ export default class EmulatorClient {
     });
   }
 
-  screenrecordWebrtcStart(fps = 60) {
+  screenrecordWebrtcStart(fps = 60): Promise<string> {
     return this.connection().then((conn) => {
       return new ScreenrecordWebrtcStartCommand(conn, this.parser).execute(fps);
     });
   }
 
-  screenrecordWebrtcStop() {
+  screenrecordWebrtcStop(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `screenrecord webrtc stop`
@@ -685,13 +701,13 @@ export default class EmulatorClient {
     });
   }
 
-  fold() {
+  fold(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).setTimeout(100).execute(`fold`);
     });
   }
 
-  unfold() {
+  unfold(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser)
         .setTimeout(100)
@@ -705,7 +721,7 @@ export default class EmulatorClient {
     height: number,
     dpi: number,
     flag = 0
-  ) {
+  ): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `multidisplay add ${id} ${width} ${height} ${dpi} ${flag}`
@@ -713,7 +729,7 @@ export default class EmulatorClient {
     });
   }
 
-  multidisplayDel(id: number) {
+  multidisplayDel(id: number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(
         `multidisplay del ${id}`
@@ -721,31 +737,31 @@ export default class EmulatorClient {
     });
   }
 
-  grpc(port: number) {
+  grpc(port: number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`grpc ${port}`);
     });
   }
 
-  startExtendedWindow() {
+  startExtendedWindow(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`startExtendedWindow`);
     });
   }
 
-  quitExtendedWindow() {
+  quitExtendedWindow(): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`quitExtendedWindow`);
     });
   }
 
-  setUiTheme(theme: "light" | "dark") {
+  setUiTheme(theme: "light" | "dark"): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidCommand(conn, this.parser).execute(`setUiTheme ${theme}`);
     });
   }
 
-  iceboxTrack(pid: number, maxSnapshots?: number) {
+  iceboxTrack(pid: number, maxSnapshots?: number): Promise<void> {
     return this.connection().then((conn) => {
       return new VoidQueueCommand(conn, this.parser)
         .addArg(maxSnapshots, " ")
